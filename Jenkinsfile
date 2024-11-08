@@ -9,7 +9,7 @@ pipeline {
         // Ensure Maven is in the PATH
         PATH = "/opt/apache-maven-3.9.9/bin:$PATH"
         // Use credentials stored in Jenkins for DockerHub
-        // DOCKERHUB_CREDENTIALS = credentials('dockerlogin')
+        DOCKERHUB_CREDENTIALS = credentials('dockerlogin')
     }
     
     stages {
