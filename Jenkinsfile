@@ -1,18 +1,37 @@
 pipeline {
     agent {
         node {
-            label 'maven'
+            label 'maven' // Ensuring the pipeline runs on a node labeled 'maven'
         }
     }
-
+    
+    environment {
+        // Ensure Maven is in the PATH
+        PATH = "/opt/apache-maven-3.9.9/bin:$PATH"
+        // Use credentials stored in Jenkins for DockerHub
+        // DOCKERHUB_CREDENTIALS = credentials('dockerlogin')
+    }
+    
     stages {
-        stage("Performing build"){
+        stage("Performing Build") {
             steps {
-                sh 'mvn clean deploy'
+                script {
+                    // Print the Maven version to verify installation
+                    sh 'mvn -version'
+
+                    // Perform Maven build
+                    sh 'mvn clean deploy'
+                }
             }
-        }    
+        }
+    }
+    
+    post {
+        success {
+            echo 'Build completed successfully!'
+        }
+        failure {
+            echo 'Build failed!'
+        }
     }
 }
-
-    
-        
