@@ -26,6 +26,15 @@ pipeline {
         }
     }
     
+        stage('Docker Build') {
+            steps {
+                echo 'Perform Docker Build'
+                sh "docker build -t rajesh4ever/banking-finance:${BUILD_NUMBER} ."
+                sh "docker tag rajesh4ever/banking-finance:${BUILD_NUMBER} rajesh4ever/banking-finance:latest"
+                sh 'docker image list'
+            }
+        }
+    
     post {
         success {
             echo 'Build completed successfully!'
