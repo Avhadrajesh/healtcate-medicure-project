@@ -23,7 +23,7 @@ pipeline {
 
         stage('SonarQube Analysis') {
             environment {
-                scannerHome = tool 'sa-sonar-scanner'
+                scannerHome = tool 'sonar-scanner'
                 }
             steps {
                 script {
