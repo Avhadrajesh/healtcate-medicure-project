@@ -20,7 +20,7 @@ pipeline {
                     sh 'mvn -version'
 
                     // Perform Maven build
-                    sh 'mvn clean deploy'
+                    sh 'mvn clean package'
                 }
             }
         }
