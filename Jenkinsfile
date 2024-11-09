@@ -15,16 +15,19 @@ pipeline {
         stage("Performing Build") {
             steps {
                 script {
+                    echo "------------------- Maven build started -------------------"
                     sh 'mvn -version'
-                    sh 'mvn clean package'
+                    sh 'mvn clean deploy'
+                    echo "------------------- Maven build successful -------------------"
                 }
             }
         }
 
         stage('test') {
             steps {
-                echo "-------------------Unit test started -------------------"
+                echo "------------------- Unit test started -------------------"
                 sh 'mvn surefire-report:report'
+                echo "------------------- Unit test completed -------------------"
             }
         }
 
@@ -34,8 +37,10 @@ pipeline {
                 }
             steps {
                 script {
+                    echo "------------------- SonarScanner started -------------------"
                     withSonarQubeEnv('sonarqube-server') {
                     sh "${scannerHome}/bin/sonar-scanner"
+                    echo "------------------- SonarScanner completed successfully! -------------------"
                     }
                 }
             }
