@@ -1,0 +1,123 @@
+// Define variables outside of the pipeline
+def registry = 'https://onlydevopss.jfrog.io/'
+def imageName = "${registry}/medicure-app-docker/medicure_app" // Define the image name
+def version = '0.0.1-SNAPSHOT' // Define the version
+
+pipeline {
+    agent {
+        node {
+            label 'maven'
+        }
+    }
+
+    environment {
+        PATH = "/opt/apache-maven-3.9.9/bin:$PATH" // Add Maven to PATH
+        DOCKERHUB_CREDENTIALS = credentials('dockerlogin') // DockerHub credentials
+    }
+
+    stages {
+        stage('SCM_Checkout') {
+            steps {
+                echo " ---------- Perform SCM Checkout starting --------------"
+                git credentialsId: 'github_cred', url: 'https://github.com/Avhadrajesh/healthcare-medicure-project.git'
+                echo " ---------- Perform SCM Checkout successful --------------"            
+            }
+        }
+        
+        stage('Application Build') {
+            steps {
+                echo 'Performing Application Build with Maven'
+                sh 'mvn clean package' // Maven command uses the updated PATH
+                echo "------------------- Application Build successful -------------------"
+            }
+        }
+        
+        stage('Test') {
+            steps {
+                script {
+                    echo "------------------- Unit test started -------------------"
+                    sh 'mvn surefire-report:report'
+                    echo "------------------- Unit test completed -------------------"
+                }
+            }
+        }
+
+        stage("Jar Publish") {
+            steps {
+                script {
+                    echo '<--------------- Jar Publish Started --------------->'
+                    def server = Artifactory.newServer(url: registry + "/artifactory", credentialsId: "artifactory_cred")
+                    def properties = "buildid=${env.BUILD_ID},commitid=${env.GIT_COMMIT}"
+                    def uploadSpec = """{
+                        "files": [
+                            {
+                                "pattern": "target/(*)",
+                                "target": "medicure-libs-release-local//{1}",
+                                "flat": "false",
+                                "props": "${properties}",
+                                "exclusions": ["*.sha1", "*.md5"]
+                            }
+                        ]
+                    }"""
+                    def buildInfo = server.upload(uploadSpec)
+                    buildInfo.env.collect()
+                    server.publishBuildInfo(buildInfo)
+                    echo '<--------------- Jar Publish Ended --------------->'
+                }
+            }
+        }
+
+        stage("Docker Build") {
+            steps {
+                script {
+                    echo '<--------------- Docker Build Started --------------->'
+                    app = docker.build(imageName+":"+version) // Build the Docker image
+                    echo '<--------------- Docker Build Ends --------------->'
+                }
+            }
+        }
+
+        stage("Docker Publish") {
+            steps {
+                script {
+                    echo '<--------------- Docker Publish Started --------------->'
+                    docker.withRegistry(registry, 'artifactory_cred') {
+                        app.push() // Push the Docker image to Artifactory
+                    }    
+                    echo '<--------------- Docker Publish Ended --------------->'  
+                }
+            }
+        }
+
+
+        stage('Login to Dockerhub') {
+            steps {
+                echo 'Login to DockerHub'
+                script {
+                    sh "echo ${DOCKERHUB_CREDENTIALS_PSW} | docker login -u ${DOCKERHUB_CREDENTIALS_USR} --password-stdin"
+                }
+            }
+        }
+
+        stage('Publish the Image to Dockerhub') {
+            steps {
+                echo 'Publish to DockerHub'
+                // sh "docker push rajesh4ever/banking-finance:${BUILD_NUMBER}"
+            }
+        }
+        
+        stage('Deploying the application in Production server') {
+            steps {
+                echo 'Deploying application'
+                // ansiblePlaybook(
+                //    playbook: 'ansible-playbook.yml',
+                //    inventory: '/opt/hosts',
+                //    credentialsId: 'ansible',
+                //    disableHostKeyChecking: true,
+                //    become: true,
+                //    vaultTmpPath: ''
+                // )
+            }
+        }    
+    }
+}
