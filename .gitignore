@@ -31,4 +31,10 @@ build/
 
 ### VS Code ###
 .vscode/
-.terraform/*
+.obsidian/
+
+### Terraform ###
+*.tfstate
+*.tfstate.*
+*.tfvars
+.terraform/
