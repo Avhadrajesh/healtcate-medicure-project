@@ -1,0 +1,26 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: medicure-rtp
+  namespace: medicure  # Specify the namespace
+spec:
+  replicas: 1  # Set the number of replicas
+  selector:
+    matchLabels:
+      app: medicure-rtp
+  template:
+    metadata:
+      labels:
+        app: medicure-rtp
+    spec:
+      imagePullSecrets:
+      - name: regcred  # Specify the image pull secret
+      containers:
+      - name: medicure-rtp
+        image: onlydevopss.jfrog.io/medicure-app-docker/medicure_app:latest  # Update the image
+        imagePullPolicy: Always  # Always pull the image
+        ports:
+        - containerPort: 8000  # Update the container port
+
+
+aws eks describe-cluster --name medicure-kubernetes-eks-01 --query 'cluster.{"Kubernetes_Version": version, "Platform_Version": platformVersion}'
